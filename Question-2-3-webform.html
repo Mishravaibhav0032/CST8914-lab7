@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <title>Accessible Form with Proper Validation</title>
+    <title>Feedback Form</title>
     <meta charset="utf-8">
     <style>
         .control, fieldset {
-            margin: 10px 0;
+            margin: 6px 0;
         }
 
         label {
@@ -20,115 +21,114 @@
 
         .error, .required {
             color: red;
-            display: block;
-            font-size: 0.9em;
-        }
-
-        .error-message {
-            color: red;
-            font-size: 0.9em;
-            display: none;
         }
 
         fieldset ul {
             margin: 0;
         }
+        
 
-        /* Accessibility Fix: Ensure focus indicators are visible */
-        input:focus, button:focus, textarea:focus {
-            outline: 3px solid #007BFF;
-        }
     </style>
 </head>
 <body>
-
-<h1>Feedback Form</h1>
-
-<!-- Error Message Container -->
-<div id="error-summary" class="error-message" role="alert" aria-live="assertive">
-    <ul></ul>
-</div>
-
-<form id="feedbackForm">
-    <div class="control">
-        <label for="name">Full Name <span class="required">*</span></label>
-        <input id="name" name="name" type="text" aria-required="true" aria-describedby="error-name"/>
-        <span id="error-name" class="error-message">Please enter your full name!</span>
-    </div>
-
-    <div class="control">
-        <label for="biography">Biography</label>
-        <textarea id="biography" name="biography" aria-describedby="error-biography"></textarea>
-        <span id="error-biography" class="error-message">Please provide details about your background.</span>
-    </div>
-
-    <fieldset>
-        <legend>Gender</legend>
-        <div class="control">
-            <input id="gender_male" name="gender" type="radio" value="male">
-            <label for="gender_male">Male</label>
+    <h1>Feedback Form</h1>
+    <form id="feedbackForm">
+        
+<div class="control">
+            <label for="name">Full name <span class="required">*</span></label>
+            <input id="name" name="name" type="text" aria-required="true" aria-describedby="name_description">
+            <span id="name_description" class="offscreen">Please enter your full name.</span>
         </div>
+
         <div class="control">
-            <input id="gender_female" name="gender" type="radio" value="female">
-            <label for="gender_female">Female</label>
+            <label for="biography">Biography</label>
+            <textarea id="biography" name="biography" aria-describedby="biography_description"></textarea>
+            <span id="biography_description" class="offscreen">Include examples of your skills in JavaScript.</span>
         </div>
-        <span id="error-gender" class="error-message">Please select your gender!</span>
-    </fieldset>
 
-    <div class="control">
-        <input id="accept_agbs" name="accept_agbs" type="checkbox" value="1">
-        <label for="accept_agbs">I accept the terms and conditions</label>
-        <span id="error-accept" class="error-message">You must accept our terms and conditions!</span>
-    </div>
 
-    <div class="control">
-        <input type="submit" value="Register">
-    </div>
-</form>
+       <fieldset>
+            <legend>Gender <span class="required">*</span></legend>
+            <div class="control">
+                <input id="gender_male" name="gender" type="radio" value="male" aria-required="true">
+                <label for="gender_male">Male</label>
+            </div>
+            <div class="control">
+                <input id="gender_female" name="gender" type="radio" value="female">
+                <label for="gender_female">Female</label>
+            </div>
+            <span class="error" id="gender_error" aria-live="assertive"></span>
+        </fieldset>
 
-<!-- Accessible Form Validation & Error Handling -->
-<script>
-    document.getElementById("feedbackForm").addEventListener("submit", function(event) {
-        event.preventDefault(); // Prevent form submission
+        <div class="control">
+            <input id="accept_agbs" name="accept_agbs" type="checkbox" value="1" aria-required="true">
+            <label for="accept_agbs">I accept the terms and conditions <span class="required">*</span></label>
+            <span class="error" id="accept_agbs_error" aria-live="assertive"></span>
+        </div>
 
-        let isValid = true;
-        let errorSummary = document.getElementById("error-summary");
-        let errorList = errorSummary.querySelector("ul");
-        errorList.innerHTML = ""; // Clear previous errors
-        errorSummary.style.display = "none"; // Hide error section initially
+        <div class="control">
+            <input name="validate" type="hidden" value="1">
+            <input type="submit" value="Register">
+        </div>
 
-        function showError(inputId, message) {
-            isValid = false;
-            let errorSpan = document.getElementById("error-" + inputId);
-            errorSpan.style.display = "block";
-            errorList.innerHTML += `<li><a href="#${inputId}">${message}</a></li>`;
-        }
+        <div id="error_container" aria-live="assertive" style="display:none;"></div>
+    </form>
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script>
+        "use strict";
+        $(document).ready(function () {
+            $('#feedbackForm').on('submit', function (event) {
+                event.preventDefault(); // Prevent the default form submission
+                
+                // Clear previous errors
+                $('.error').text('');
+                $('#error_container').hide();
 
-        function clearErrors() {
-            document.querySelectorAll(".error-message").forEach(e => e.style.display = "none");
-        }
+                let hasErrors = false;
 
-        clearErrors();
+                // Validation logic
+                const name = $('#name').val().trim();
+                if (!name) {
+                    hasErrors = true;
+                    $('#name_description').text('Please enter your name!').show();
+                    $('#name').attr('aria-describedby', 'name_description');
+                }
 
-        let name = document.getElementById("name").value.trim();
-        let biography = document.getElementById("biography").value.trim();
-        let gender = document.querySelector('input[name="gender"]:checked');
-        let acceptTerms = document.getElementById("accept_agbs").checked;
+                const biography = $('#biography').val().trim();
+                if (!biography) {
+                    hasErrors = true;
+                    $('#biography_description').text('Please tell us something about your history!').show();
+                    $('#biography').attr('aria-describedby', 'biography_description');
+                }
 
-        if (name === "") showError("name", "Please enter your full name!");
-        if (biography === "") showError("biography", "Please provide details about your background.");
-        if (!gender) showError("gender", "Please select your gender!");
-        if (!acceptTerms) showError("accept", "You must accept our terms and conditions!");
+                const gender = $('input[name="gender"]:checked').val();
+                if (!gender) {
+                    hasErrors = true;
+                    $('#gender_error').text('Please tell us your gender!').show();
+                    $('#gender_male').attr('aria-describedby', 'gender_error');
+                    $('#gender_female').attr('aria-describedby', 'gender_error');
+                }
 
-        if (!isValid) {
-            errorSummary.style.display = "block";
-            errorSummary.focus();
-        } else {
-            alert("All inputs are valid.");
-            document.getElementById("feedbackForm").submit();
-        }
-    });
-</script>
+                const acceptAgbs = $('#accept_agbs').is(':checked');
+                if (!acceptAgbs) {
+                    hasErrors = true;
+                    $('#accept_agbs_error').text('You must accept our terms and conditions!').show();
+                    $('#accept_agbs').attr('aria-describedby', 'accept_agbs_error');
+                }
 
+                if (hasErrors) {
+                    // Move focus to the first error
+                    $('#error_container').html('<strong>Please correct the errors in the form.</strong>').show();
+                    $('#error_container').focus();
+                    return; // Stop further execution
+                } else {
+                    alert('All inputs are valid.');
+                    // Here you can add the form submission logic, e.g., an AJAX call or redirect.
+                }
+            });
+        });
+    </script>
+    
 </body>
 </html>
